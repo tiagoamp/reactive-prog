@@ -1,62 +1,56 @@
 package playground;
 
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import playground.stub.MyDataObj;
+
 public class CompletableFutureTests {
 
 	
-	public static void main(String[] args) {
-		ExecutorService executor = Executors.newFixedThreadPool(4); // 4 threads pool
+	public static void main(String[] args) throws InterruptedException {
 		
-		for(int i=0; i<10; i++) {
-			MyDataObj myDataObj = new MyDataObj(i, "I am id = " + i);
-			
+		final int qtdThreads = Runtime.getRuntime().availableProcessors();
+		ExecutorService executor = Executors.newFixedThreadPool(qtdThreads);
+		final int nrOfElemts = 10;
+		
+		emitsAndProcessElementsWithSupplierAsync(nrOfElemts, executor);
+						
+		Thread.sleep(10_000); // await 10 seconds for tasks to finish
+		System.out.println("----------------");
+		
+		emitsAndProcessElementsWithRunnableAsync(nrOfElemts, executor);
+		
+		executor.shutdown();
+		System.exit(0);
+		
+	}
+	
+	
+	private static void emitsAndProcessElementsWithSupplierAsync(int nrOfElemts, ExecutorService executor) {
+		System.out.println("Supplier results:");
+		for(int i=0; i<nrOfElemts; i++) {			
+			MyDataObj myDataObj = new MyDataObj(i, "I am id = " + i);			
 			CompletableFuture.supplyAsync(() -> myDataObj, executor)
 				.exceptionally(ex -> new MyDataObj(-1, "I am error!"))
-				.thenApply(obj -> uppercaseFunction(obj))
-				.thenAccept(str -> printFunction(str));
-							
+				.thenApply(obj -> obj.getInfo().toUpperCase())
+				.thenAccept(System.out::println);							
+		}		
+	}
+	
+	private static void emitsAndProcessElementsWithRunnableAsync(int nrOfElemts, ExecutorService executor) {
+		System.out.println("Runnable results:");
+		for(int i=0; i<nrOfElemts; i++) {
+			MyDataObj myDataObj = new MyDataObj(i, "I am id = " + i);
+			CompletableFuture<MyDataObj> compfuture = new CompletableFuture<>();			
+			CompletableFuture.runAsync(() -> compfuture.complete(myDataObj), executor);
+			compfuture
+				.exceptionally(ex -> new MyDataObj(-1, "I am error!"))
+				.thenApply(obj -> obj.getInfo().toUpperCase())
+				.thenAccept(System.out::println);										
 		}
-		
-		
 	}
 	
 	
-	private static MyDataObj getRandomDataObj() {
-		int randInt = new Random().nextInt();
-		return new MyDataObj(randInt, "I am id = " + randInt);
-	}
-	
-	private static String uppercaseFunction(MyDataObj dataObj) {
-		return dataObj.getInfo().toUpperCase();
-	}
-	
-	private static void printFunction(String info) {
-		System.out.println(info);
-	}
-	
-}
-
-/**
- * Simulates a data object
- */
-class MyDataObj {
-	private int id;
-	private String info;
-	
-	public MyDataObj(int id, String info) {
-		this.id = id;
-		this.info = info;
-	}	
-		
-	public int getId() {
-		return id;
-	}
-	public String getInfo() {
-		return info;
-	}
-		
 }
