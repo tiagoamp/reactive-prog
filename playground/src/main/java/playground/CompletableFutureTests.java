@@ -23,8 +23,7 @@ public class CompletableFutureTests {
 		emitsAndProcessElementsWithRunnableAsync(nrOfElemts, executor);
 		
 		executor.shutdown();
-		System.exit(0);
-		
+		System.exit(0);		
 	}
 	
 	
