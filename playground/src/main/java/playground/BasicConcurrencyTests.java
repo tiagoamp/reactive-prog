@@ -2,7 +2,7 @@ package playground;
 
 import java.util.Random;
 
-class Ping extends Thread {
+class Ping implements Runnable {
 	
 	@Override
 	public void run() {		
@@ -14,7 +14,7 @@ class Ping extends Thread {
 	
 }
 
-class Pong extends Thread {
+class Pong implements Runnable {
 	
 	@Override
 	public void run() {
@@ -26,18 +26,38 @@ class Pong extends Thread {
 	
 }
 
+class Counter {
+	int count;
+	
+	public synchronized void increment() {
+		count++; // count = count +1
+	}
+}
+
 public class BasicConcurrencyTests {
 
-	public static void main(String[] args) {
-		System.out.println("Start of main thread");
+	public static void main(String[] args) throws InterruptedException {
+		Counter counter = new Counter();
 		
-		Thread ping = new Ping();
-		Thread pong = new Pong();
+		Thread c1 = new Thread(() -> {
+			for (int i = 0; i < 500; i++) {
+				counter.increment();
+			}
+		});
+		Thread c2 = new Thread(() -> {
+			for (int i = 0; i < 500; i++) {
+				counter.increment();
+			}
+		});
 		
-		ping.start();
-		pong.start();
+		c1.start(); // async counter thread 1 start
+		c2.start(); // async counter thread 1 start
 		
-		System.out.println("End of main thread");		
+		// awating async threads to finish
+		c1.join();
+		c2.join();
+		
+		System.out.println(counter.count);		
 	}
 	
 }
