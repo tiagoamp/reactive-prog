@@ -32,9 +32,9 @@ public class CompletableFutureTests {
 		for(int i=0; i<nrOfElemts; i++) {			
 			MyDataObj myDataObj = new MyDataObj(i, "I am id = " + i);			
 			CompletableFuture.supplyAsync(() -> myDataObj, executor)
-				.exceptionally(ex -> new MyDataObj(-1, "I am error!"))
-				.thenApply(obj -> obj.getInfo().toUpperCase())
-				.thenAccept(System.out::println);							
+				.exceptionally(ex -> new MyDataObj(-1, "I am error!"))  // callback for exception case, recovers with dummy data
+				.thenApply(obj -> obj.getInfo().toUpperCase())          // callback for transformation
+				.thenAccept(System.out::println);	                    // callback for successful case						
 		}		
 	}
 	
