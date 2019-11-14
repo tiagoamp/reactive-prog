@@ -16,8 +16,6 @@ import rx.functions.Func1;
 
 public class RxJavaIntroTests {
 
-	//Hello World
-	
 	public static void main(String[] args) {
 		helloWorld1();
 		System.out.println();
