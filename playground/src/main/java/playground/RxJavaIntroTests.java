@@ -159,7 +159,7 @@ public class RxJavaIntroTests {
 			}				
 		}
 		
-		// callable func that creates a Stormtroper after 3 seconds
+		// callable func that creates a Stormtroper after 3 seconds delay
 		Callable<Stormtrooper> trooperGenerator = () -> {  
 			Thread.sleep(3 * 1000);
 			return new Stormtrooper(random.nextInt());
@@ -173,7 +173,7 @@ public class RxJavaIntroTests {
 		Observer<Stormtrooper> jedi = new Observer<Stormtrooper>() {
 			@Override
 			public void onCompleted() {
-				System.out.println("End of Fight!");				
+				System.out.println("May the force be with you!");				
 			}
 			@Override
 			public void onError(Throwable e) {
