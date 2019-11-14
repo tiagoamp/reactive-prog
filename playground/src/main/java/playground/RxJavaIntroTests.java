@@ -1,7 +1,12 @@
 package playground;
 
+import java.util.List;
 import java.util.Random;
-import java.util.function.Predicate;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import rx.Observable;
 import rx.Observer;
@@ -15,11 +20,36 @@ public class RxJavaIntroTests {
 	
 	public static void main(String[] args) {
 		helloWorld1();
+		System.out.println();
+		
 		helloWorld2();
+		System.out.println();
+		
 		helloWorld3();
+		System.out.println();
+		
 		helloWorld4();
+		System.out.println();
+		
 		helloWorld5();
+		System.out.println();
+		
 		operatorsExamples();
+		System.out.println();
+		
+		intervalExample();
+		System.out.println();
+		
+		observableFromListExample();
+		System.out.println();
+		
+		observableFromCallableExample();
+		System.out.println();
+		
+		observableFromFutureExample();
+		System.out.println();
+		
+		starWarsBattle();
 	}
 	
 	
@@ -68,7 +98,7 @@ public class RxJavaIntroTests {
 	// since it is emitted just one item, it can be a Single object
 	public static void helloWorld5() {
 		Single<String> mySingle = Single.just("Hello World 5 from Single!"); 
-		mySingle.subscribe(System.out::println, RuntimeException::new); 		
+		mySingle.subscribe(System.out::println, RuntimeException::new);		
 	}
 		
 	// Operators examples
@@ -82,53 +112,81 @@ public class RxJavaIntroTests {
 			.filter(evenNumberFunc)
 			.map(doubleNumberFunc);
 		
-		myObservable.subscribe(val -> System.out.print( " " + val));		
+		myObservable.subscribe(System.out::println); // prints 4 8 12 16 20
 	}
 	
-	private static void starWarsExample() {
-		
-		TODO: terminar e colocar no github gist
-		
-		Observable.from(stormTroopersList).interval()
-		
+	// Interval operator
+	private static void intervalExample() {
+		Observable.interval(2, TimeUnit.SECONDS)  // emits a sequential number every 2 seconds 
+			.take(5)  // limit to first 5 elements
+			.toBlocking()  // converts to a blocking observable
+			.subscribe(System.out::println); // prints 0 to 4 in 2 seconds interval
 	}
 	
-	interface Warrior { };
-	
-	class StormTrooper implements Warrior {
-		
-		private int imperialNr;
-		private boolean defeated;
-		
-		public StormTrooper(int imperialNumber) {
-			this.imperialNr = imperialNumber;
-		}
-		
-		public void fightWith(Warrior warrior) {
-			if (warrior instanceof Jedi) defeated = true;
-		}
-		
-		public boolean isDefeated() {
-			return defeated;
-		}
-		
-		public int getImperialNr() {
-			return imperialNr;
-		}
+	// Creating Observables from a Collection/List
+	private static void observableFromListExample() {
+		List<Integer> intList = IntStream.rangeClosed(1, 10).mapToObj(Integer::new).collect(Collectors.toList());
+		Observable.from(intList).subscribe(System.out::println); // prints from 1 to 10
 	}
 	
-	class Jedi implements Warrior {
+	// Creating Observables from Callable function
+	private static void observableFromCallableExample() {
+		Callable<String> callable = () -> "From Callable";		
+		Observable.fromCallable(callable) // defers the callable execution until subscription time
+			.subscribe(System.out::println);
+	}
+	
+	// Creating Observables from Future instances
+	private static void observableFromFutureExample() {
+		CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "From Future");
+		Observable.from(future) // converts a Future into Observable
+			.subscribe(System.out::println);
+	}
+	
+	// StarWar battle: Let's get nerdy...
+	private static void starWarsBattle() {
+		Random random = new Random();
 		
-		private String name;
-		
-		public Jedi(String name) {
-			this.name = name;
+		// Stormtrooper class
+		class Stormtrooper {
+			private int imperialNr;
+			
+			public Stormtrooper(int imperialNumber) {
+				this.imperialNr = imperialNumber;
+			}			
+			public String getName() {
+				return "#" + imperialNr;
+			}				
 		}
 		
-		public String getName() {
-			return name;
-		}
-				
+		// callable func that creates a Stormtroper after 3 seconds
+		Callable<Stormtrooper> trooperGenerator = () -> {  
+			Thread.sleep(3 * 1000);
+			return new Stormtrooper(random.nextInt());
+		};
+		
+		// Creating Observables of Stormtrooper creation
+		List<Observable<Stormtrooper>> observables = IntStream.rangeClosed(1, 4)
+			.mapToObj(n -> Observable.fromCallable(trooperGenerator)).collect(Collectors.toList());
+		
+		// Jedi observer to fight every tropper created in time
+		Observer<Stormtrooper> jedi = new Observer<Stormtrooper>() {
+			@Override
+			public void onCompleted() {
+				System.out.println("End of Fight!");				
+			}
+			@Override
+			public void onError(Throwable e) {
+				throw new RuntimeException(e);				
+			}
+			@Override
+			public void onNext(Stormtrooper t) {
+				System.out.println("Jedi defeated Stormtrooper " + t.getName());				
+			}						
+		};
+		
+		// Jedi subscribe to listen to every Stormtrooper creation event
+		observables.forEach(o -> o.subscribe(jedi)); // Battle inits at subscription time		
 	}
 	
 }
