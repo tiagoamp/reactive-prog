@@ -15,7 +15,7 @@ import rx.functions.Action1;
 import rx.functions.Func1;
 
 public class RxJavaIntroTests {
-
+	
 	public static void main(String[] args) {
 		helloWorld1();
 		System.out.println();
@@ -160,7 +160,7 @@ public class RxJavaIntroTests {
 		// callable func that creates a Stormtroper after 3 seconds delay
 		Callable<Stormtrooper> trooperGenerator = () -> {  
 			Thread.sleep(3 * 1000);
-			return new Stormtrooper(random.nextInt());
+			return new Stormtrooper(random.nextInt(1000));
 		};
 		
 		// Creating Observables of Stormtrooper creation
